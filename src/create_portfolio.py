@@ -11,6 +11,54 @@ import queue
 from transaction import Tx
 
 
+def sell_transaction(traded_amount, traded_currencies, new_tx):
+    curr = new_tx.currency
+    total_profit = 0
+    while traded_amount > 0:
+        first_trade = traded_currencies[curr].queue[0]
+        entry_price = first_trade.unit_price
+        if first_trade.amount_principal < new_tx.amount_principal:
+            sold_amount = first_trade.amount_principal
+            profit = (new_tx.unit_price - entry_price) * sold_amount
+            traded_amount -= first_trade.amount_principal
+            traded_currencies[curr].get()
+
+        else:
+            sold_amount = traded_amount
+            first_trade.amount_principal -= traded_amount
+            profit = (new_tx.unit_price - entry_price) * sold_amount
+            traded_amount = 0
+        total_profit += profit
+        print(
+            f"sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
+        )
+    return total_profit
+
+
+def get_remaining_positions(position_dict):
+    total_value = 0
+    for currency, q in position_dict.items():
+        total_amount = 0
+        total_price = 0
+        while True:
+            if q.empty():
+                break
+            tx = q.get()
+            total_amount += tx.amount_principal
+            total_price += tx.amount_principal * tx.unit_price
+        if total_amount != 0:
+            avg_price = total_price / total_amount
+            total_value += avg_price * total_amount
+            print(
+                f"Currency: {currency:10s} left: {round(total_amount,2):<9} average price: {round(avg_price,5):<12} value: {round(avg_price*total_amount,2):<6}"
+            )
+        else:
+            print(f"Currency: {currency:10s} left: {0:<5}")
+    print()
+    print(f"Residual value: {round(total_value,2)}")
+    print()
+
+
 def main():
 
     traded_currencies = {}
@@ -39,30 +87,18 @@ def main():
                 if action == "BUY":
                     traded_currencies[curr].put(new_tx)
                 elif action == "SELL":
-
-                    while traded_amount > 0:
-                        first_trade = traded_currencies[curr].queue[0]
-                        entry_price = first_trade.unit_price
-                        if first_trade.amount_principal < new_tx.amount_principal:
-                            sold_amount = first_trade.amount_principal
-                            profit = (new_tx.unit_price - entry_price) * sold_amount
-                            traded_amount -= first_trade.amount_principal
-                            traded_currencies[curr].get()
-
-                        else:
-                            sold_amount = traded_amount
-                            first_trade.amount_principal -= traded_amount
-                            profit = (new_tx.unit_price - entry_price) * sold_amount
-                            traded_amount = 0
-                        total_profit += profit
-                        print(
-                            f"sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
-                        )
+                    total_profit += sell_transaction(
+                        traded_amount, traded_currencies, new_tx
+                    )
                 else:
                     raise TypeError("Wrong tx type")
+
             except:
                 print(f"failed at row: {n}")
-        print("\n", total_profit)
+        print()
+        print(f"Total profit: {round(total_profit,2)}\n")
+
+    get_remaining_positions(traded_currencies)
 
 
 if __name__ == "__main__":
