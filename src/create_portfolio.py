@@ -15,23 +15,34 @@ def sell_transaction(traded_amount, traded_currencies, new_tx):
     curr = new_tx.currency
     total_profit = 0
     while traded_amount > 0:
-        first_trade = traded_currencies[curr].queue[0]
-        entry_price = first_trade.unit_price
-        if first_trade.amount_principal < new_tx.amount_principal:
-            sold_amount = first_trade.amount_principal
-            profit = (new_tx.unit_price - entry_price) * sold_amount
-            traded_amount -= first_trade.amount_principal
-            traded_currencies[curr].get()
+        #print(traded_amount)
+        try:
+            first_trade = traded_currencies[curr].queue[0]
+            entry_price = first_trade.unit_price
+            if first_trade.amount_principal < traded_amount:
+                sold_amount = first_trade.amount_principal
+                profit = (new_tx.unit_price - entry_price) * sold_amount
+                traded_amount -= first_trade.amount_principal
+                traded_currencies[curr].get()
 
-        else:
+            else:
+                sold_amount = traded_amount
+                first_trade.amount_principal -= traded_amount
+                profit = (new_tx.unit_price - entry_price) * sold_amount
+                traded_amount = 0
+            total_profit += profit
+            print(
+                f"sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
+            )
+        except:
             sold_amount = traded_amount
-            first_trade.amount_principal -= traded_amount
-            profit = (new_tx.unit_price - entry_price) * sold_amount
+            profit = new_tx.unit_price * sold_amount
+            total_profit += profit
             traded_amount = 0
-        total_profit += profit
-        print(
-            f"sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
-        )
+            print(
+                f"sold {round(sold_amount,2): <8} {curr:10s} earned at {0:<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
+            )
+            
     return total_profit
 
 
