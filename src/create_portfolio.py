@@ -11,7 +11,8 @@ import queue
 from transaction import Tx
 
 
-def sell_transaction(traded_amount, traded_currencies, new_tx):
+def sell_transaction(date, traded_amount, traded_currencies, new_tx):
+    date_str = date.strftime('%d-%m-%Y')
     curr = new_tx.currency
     total_profit = 0
     while traded_amount > 0:
@@ -32,7 +33,7 @@ def sell_transaction(traded_amount, traded_currencies, new_tx):
                 traded_amount = 0
             total_profit += profit
             print(
-                f"sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
+                f"Date: {date_str} sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
             )
         except:
             sold_amount = traded_amount
@@ -40,7 +41,7 @@ def sell_transaction(traded_amount, traded_currencies, new_tx):
             total_profit += profit
             traded_amount = 0
             print(
-                f"sold {round(sold_amount,2): <8} {curr:10s} earned at {0:<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
+                f"Date: {date_str} sold {round(sold_amount,2): <8} {curr:10s} earned at {0:<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
             )
             
     return total_profit
@@ -99,7 +100,7 @@ def main():
                     traded_currencies[curr].put(new_tx)
                 elif action == "SELL":
                     total_profit += sell_transaction(
-                        traded_amount, traded_currencies, new_tx
+                        inv_date,traded_amount, traded_currencies, new_tx
                     )
                 else:
                     raise TypeError("Wrong tx type")
