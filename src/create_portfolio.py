@@ -12,38 +12,46 @@ from transaction import Tx
 
 
 def sell_transaction(date, traded_amount, traded_currencies, new_tx):
-    date_str = date.strftime('%d-%m-%Y')
+    date_str = date.strftime("%d-%m-%Y")
     curr = new_tx.currency
     total_profit = 0
     while traded_amount > 0:
-        #print(traded_amount)
         try:
             first_trade = traded_currencies[curr].queue[0]
             entry_price = first_trade.unit_price
             if first_trade.amount_principal < traded_amount:
                 sold_amount = first_trade.amount_principal
-                profit = (new_tx.unit_price - entry_price) * sold_amount
                 traded_amount -= first_trade.amount_principal
                 traded_currencies[curr].get()
 
             else:
                 sold_amount = traded_amount
                 first_trade.amount_principal -= traded_amount
-                profit = (new_tx.unit_price - entry_price) * sold_amount
                 traded_amount = 0
+            
+            profit = (new_tx.unit_price - entry_price) * sold_amount
+            if new_tx.unit_price > 5*entry_price:
+                hankintameno=True
+                profit = (new_tx.unit_price * 0.8) * sold_amount
+            else:
+                hankintameno = False
             total_profit += profit
-            print(
+            print(f"{date_str};{curr};{round(sold_amount,4)};{round(first_trade.unit_price,4)};{round(new_tx.unit_price,2)};{round(profit,4)};{hankintameno}")
+            """ print(
                 f"Date: {date_str} sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
-            )
+            )"""
         except:
             sold_amount = traded_amount
-            profit = new_tx.unit_price * sold_amount
-            total_profit += profit
+            profit = new_tx.unit_price * sold_amount * 0.8
+            total_profit += profit * 0.8
             traded_amount = 0
+            hankintameno=True
+            print(f"{date_str};{curr};{round(sold_amount,4)};{0};{round(new_tx.unit_price,4)};{round(profit,4)};{hankintameno}")
+            """
             print(
                 f"Date: {date_str} sold {round(sold_amount,2): <8} {curr:10s} earned at {0:<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
-            )
-            
+            )"""
+
     return total_profit
 
 
@@ -72,7 +80,7 @@ def get_remaining_positions(position_dict):
 
 
 def main():
-
+    print(f"DATE;ASSET;QTY;ENTRY;EXIT;PROFIT;HANKINTAMENO")
     traded_currencies = {}
     with open(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "holdings.txt"), "r"
@@ -100,7 +108,7 @@ def main():
                     traded_currencies[curr].put(new_tx)
                 elif action == "SELL":
                     total_profit += sell_transaction(
-                        inv_date,traded_amount, traded_currencies, new_tx
+                        inv_date, traded_amount, traded_currencies, new_tx
                     )
                 else:
                     raise TypeError("Wrong tx type")
