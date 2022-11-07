@@ -28,15 +28,17 @@ def sell_transaction(date, traded_amount, traded_currencies, new_tx):
                 sold_amount = traded_amount
                 first_trade.amount_principal -= traded_amount
                 traded_amount = 0
-            
+
             profit = (new_tx.unit_price - entry_price) * sold_amount
-            if new_tx.unit_price > 5*entry_price:
-                hankintameno=True
+            if new_tx.unit_price > 5 * entry_price:
+                hankintameno = True
                 profit = (new_tx.unit_price * 0.8) * sold_amount
             else:
                 hankintameno = False
             total_profit += profit
-            print(f"{date_str};{curr};{round(sold_amount,4)};{round(first_trade.unit_price,4)};{round(new_tx.unit_price,2)};{round(profit,4)};{hankintameno}")
+            print(
+                f"{date_str};{curr};{round(sold_amount,4)};{round(first_trade.unit_price,4)};{round(new_tx.unit_price,2)};{round(profit,4)};{hankintameno}"
+            )
             """ print(
                 f"Date: {date_str} sold {round(sold_amount,2): <8} {curr:10s} bought at {round(first_trade.unit_price,2):<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
             )"""
@@ -45,8 +47,10 @@ def sell_transaction(date, traded_amount, traded_currencies, new_tx):
             profit = new_tx.unit_price * sold_amount * 0.8
             total_profit += profit * 0.8
             traded_amount = 0
-            hankintameno=True
-            print(f"{date_str};{curr};{round(sold_amount,4)};{0};{round(new_tx.unit_price,4)};{round(profit,4)};{hankintameno}")
+            hankintameno = True
+            print(
+                f"{date_str};{curr};{round(sold_amount,4)};{0};{round(new_tx.unit_price,4)};{round(profit,4)};{hankintameno}"
+            )
             """
             print(
                 f"Date: {date_str} sold {round(sold_amount,2): <8} {curr:10s} earned at {0:<7} sold for {round(new_tx.unit_price,2):<7} for profit of {round(profit,2):<4}"
@@ -87,6 +91,7 @@ def main():
     ) as f:
         n = 0
         total_profit = 0
+        year_profits = {}
         while True:
             n += 1
             line = f.readline()
@@ -97,6 +102,8 @@ def main():
 
             try:
                 inv_date = dt.datetime.strptime(inv_date, "%d.%m.%Y")
+                if inv_date.year not in year_profits:
+                    year_profits[inv_date.year] = 0
                 curr = str(curr)
                 action = str(action)
                 traded_amount = float(bought_amount)
@@ -107,17 +114,21 @@ def main():
                 if action == "BUY":
                     traded_currencies[curr].put(new_tx)
                 elif action == "SELL":
-                    total_profit += sell_transaction(
+                    tx_profit = sell_transaction(
                         inv_date, traded_amount, traded_currencies, new_tx
                     )
+                    total_profit += tx_profit
                 else:
                     raise TypeError("Wrong tx type")
+
+                year_profits[inv_date.year] += tx_profit
 
             except:
                 print(f"failed at row: {n}")
         print()
-        print(f"Total profit: {round(total_profit,2)}\n")
-
+        for year, profit in year_profits.items():
+            print(f"Year: {year} profit: {round(profit,2)}")
+        print()
     get_remaining_positions(traded_currencies)
 
 
