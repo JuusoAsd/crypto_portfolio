@@ -118,10 +118,9 @@ def main():
                         inv_date, traded_amount, traded_currencies, new_tx
                     )
                     total_profit += tx_profit
+                    year_profits[inv_date.year] += tx_profit
                 else:
                     raise TypeError("Wrong tx type")
-
-                year_profits[inv_date.year] += tx_profit
 
             except:
                 print(f"failed at row: {n}")
